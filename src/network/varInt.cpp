@@ -1,5 +1,6 @@
-#include "varInt.hpp"
 #include <stdexcept>
+
+#include "varInt.hpp"
 
 namespace Network
 {

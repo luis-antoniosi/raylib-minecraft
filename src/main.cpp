@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
+
 #include "network/tcpClient.hpp"
 #include "network/protocol.hpp"
 #include "network/varInt.hpp"
-#include "network/utils.hpp"
+#include "network/protocolConstants.hpp"
 
 using namespace Network;
 
@@ -11,14 +12,6 @@ using namespace Network;
 #define PORT "25565"
 
 // ip route show | grep default | awk '{print $3}'
-
-enum class ConnectionState
-{
-    HANDSHAKE,
-    STATUS,
-    LOGIN,
-    PLAY
-};
 
 int main()
 {
@@ -30,15 +23,15 @@ int main()
 
     try
     {
-        ConnectionState currentState = ConnectionState::HANDSHAKE;
-        int32_t nextState = 2;
+        ConnectionState currentState = ConnectionState::Handshake;
+        ConnectionState nextState = ConnectionState::Login;
         std::vector<uint8_t> handshakePacket = Protocol::buildHandshake(HOST, std::stoi(PORT), nextState);
 
         client.send(handshakePacket);
         std::cout << "Handshake packet sent, size of " << handshakePacket.size() << " bytes" << std::endl;
 
         std::cout << "Starting login" << std::endl;
-        currentState = ConnectionState::LOGIN;
+        currentState = ConnectionState::Login;
         std::vector<uint8_t> loginPacket = Protocol::buildLoginStart(username);
         client.send(loginPacket);
 
@@ -49,39 +42,40 @@ int main()
             std::vector<uint8_t> packetData = client.receive(packetLength);
             Packet readPacket = Protocol::readPacket(packetData, packetLength);
 
-            if (currentState == ConnectionState::LOGIN)
+            if (currentState == ConnectionState::Login)
             {
-                if (readPacket.id == 0x00)
+                if (readPacket.id == Clientbound::Login::LoginDisconnect)
                 {
                     std::cerr << "Disconnected by server during login" << std::endl;
                     running = false;
                 }
-                else if (readPacket.id == 0x01)
+                else if (readPacket.id == Clientbound::Login::EncryptionRequest)
                 {
                     std::cout << "Encryption request, ignored" << std::endl;
                 }
-                else if (readPacket.id == 0x02)
+                else if (readPacket.id == Clientbound::Login::LoginSuccess)
                 {
                     std::cout << "Login was successful!" << std::endl;
-                    currentState = ConnectionState::PLAY;
+                    currentState = ConnectionState::Play;
                 }
-                else if (readPacket.id == 0x03)
+                else if (readPacket.id == Clientbound::Login::EnableCompression)
                 {
                     std::cout << "Compression packet received and ignored" << std::endl;
                 }
             }
-            else if (currentState == ConnectionState::PLAY)
+            else if (currentState == ConnectionState::Play)
             {
-                if (readPacket.id == 0x01)
+                if (readPacket.id == Clientbound::Play::JoinGame)
                 {
+                    // TODO: Read this packet correctly
                     std::cout << "Sending client settings..." << std::endl;
                     std::vector<uint8_t> clientInfoPacket = Protocol::buildClientInformation("en-US", 10, 0, true, true);
                     client.send(clientInfoPacket);
                 }
-                else if (readPacket.id == 0x00)
+                else if (readPacket.id == Clientbound::Play::KeepAlive)
                 {
-                    const uint8_t *ptr = readPacket.dataStart;
-                    const uint8_t *end = readPacket.dataEnd;
+                    const uint8_t *ptr = readPacket.data.data();
+                    const uint8_t *end = ptr + readPacket.data.size();
 
                     if (ptr < end)
                     {
@@ -93,7 +87,7 @@ int main()
                         std::cout << "Sending keepAlive back" << std::endl;
                     }
                 }
-                else if (readPacket.id == 0x08)
+                else if (readPacket.id == Clientbound::Play::PlayerPosLook)
                 {
                     std::cout << "Received spawn and look" << std::endl;
                     PlayerPosLook playerInfo = Protocol::readPlayerPositionLook(readPacket);

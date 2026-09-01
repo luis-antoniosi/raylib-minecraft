@@ -4,15 +4,21 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include "protocolConstants.hpp"
+#include "packetReader.hpp"
 
 namespace Network
 {
     struct Packet
     {
-        int32_t length;
+        int32_t length; // packet id + data
         int32_t id;
-        const uint8_t *dataStart;
-        const uint8_t *dataEnd;
+        std::vector<uint8_t> data;
+
+        PacketReader reader() const
+        {
+            return PacketReader(data.data(), data.size());
+        }
     };
 
     struct PlayerPosLook
@@ -25,13 +31,13 @@ namespace Network
     class Protocol
     {
     public:
-        static std::vector<uint8_t> buildHandshake(const std::string &host, uint16_t port, uint32_t nextState);
+        static std::vector<uint8_t> buildHandshake(const std::string &host, uint16_t port, ConnectionState nextState);
         static std::vector<uint8_t> buildLoginStart(const std::string &name);
-        static std::vector<uint8_t> buildKeepAlive(const int64_t id);
+        static std::vector<uint8_t> buildKeepAlive(const int32_t id);
         static std::vector<uint8_t> buildClientInformation(const std::string &locale, uint8_t viewDistance, uint8_t chatMode, bool chatColors, bool showCape);
         static std::vector<uint8_t> buildPlayerPositionLook(double x, double y, double z, float yaw, float pitch, uint8_t flags);
 
-        static Packet readPacket(const std::vector<uint8_t> &data, const int32_t length);
+        static Packet readPacket(const std::vector<uint8_t> &buffer, const int32_t length);
         static PlayerPosLook readPlayerPositionLook(Packet &packet);
     };
 }

@@ -8,7 +8,7 @@ all:
 	$(CC) $(SRCS) -o $(TARGET).out
 
 run: all
-	./$(TARGET)
+	./$(TARGET).out
 
 server:
 	java -Xmx1G -Xms1G -jar ~/minecraft/server.jar nogui
