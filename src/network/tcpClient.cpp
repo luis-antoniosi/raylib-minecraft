@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "tcpClient.hpp"
+#include "varInt.hpp"
 
 namespace Network
 {
@@ -120,5 +121,12 @@ namespace Network
         }
 
         return buffer;
+    }
+
+    Packet TcpClient::readNextPacket()
+    {
+        int32_t length = VarInt::readFromSocket(*this);
+        std::vector<uint8_t> buffer = receive(length);
+        return Protocol::readPacket(buffer, length);
     }
 }

@@ -49,7 +49,7 @@ namespace Network
         return writer.finalize();
     }
 
-    std::vector<uint8_t> Protocol::buildPlayerPositionLook(double x, double y, double z, float yaw, float pitch, uint8_t flags)
+    std::vector<uint8_t> Protocol::buildPlayerPositionLook(double x, double y, double z, float yaw, float pitch, bool onGround)
     {
         PacketWriter writer(Serverbound::Play::PlayerPosLook);
 
@@ -58,7 +58,7 @@ namespace Network
         writer.writeDouble(z);
         writer.writeFloat(yaw);
         writer.writeFloat(pitch);
-        writer.writeByte(flags);
+        writer.writeBool(onGround);
 
         return writer.finalize();
     }
@@ -75,7 +75,7 @@ namespace Network
         return packet;
     }
 
-    PlayerPosLook Protocol::readPlayerPositionLook(Packet &packet)
+    PlayerPosLook Protocol::readPlayerPositionLook(const Packet &packet)
     {
         if (packet.id != Clientbound::Play::PlayerPosLook)
             throw std::invalid_argument("Packet used is not for player position and look.");

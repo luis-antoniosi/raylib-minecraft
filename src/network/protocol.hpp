@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+
 #include "protocolConstants.hpp"
 #include "packetReader.hpp"
 
@@ -35,10 +36,10 @@ namespace Network
         static std::vector<uint8_t> buildLoginStart(const std::string &name);
         static std::vector<uint8_t> buildKeepAlive(const int32_t id);
         static std::vector<uint8_t> buildClientInformation(const std::string &locale, uint8_t viewDistance, uint8_t chatMode, bool chatColors, bool showCape);
-        static std::vector<uint8_t> buildPlayerPositionLook(double x, double y, double z, float yaw, float pitch, uint8_t flags);
+        static std::vector<uint8_t> buildPlayerPositionLook(double x, double y, double z, float yaw, float pitch, bool onGround);
 
         static Packet readPacket(const std::vector<uint8_t> &buffer, const int32_t length);
-        static PlayerPosLook readPlayerPositionLook(Packet &packet);
+        static PlayerPosLook readPlayerPositionLook(const Packet &packet);
     };
 }
 
