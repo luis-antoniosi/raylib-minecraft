@@ -103,7 +103,7 @@ namespace Network
             throw std::runtime_error("Cannot receive data: not connected");
 
         std::vector<uint8_t> buffer(length);
-        ssize_t totalReceived = 0;
+        size_t totalReceived = 0;
        
         while (totalReceived < length)
         {
@@ -117,7 +117,7 @@ namespace Network
             if (bytesReceived == 0)
                 throw std::runtime_error("Connection closed by remote host.");
 
-            totalReceived += bytesReceived;
+            totalReceived += static_cast<size_t>(bytesReceived);
         }
 
         return buffer;

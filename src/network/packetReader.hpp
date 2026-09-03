@@ -14,6 +14,7 @@
 #elif defined(_WIN32)
 #include <winsock2.h>
 #define htobe64(x) htonll(x)
+#define htobe32(x) htonl(x)
 #define be64toh(x) ntohll(x)
 #define be32toh(x) ntohl(x)
 #else

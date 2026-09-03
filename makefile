@@ -1,16 +1,23 @@
-CC	:=	g++
-CFLAGS	:=	-Wall -Isrc/network -Isrc/game
-TARGET	:=	main
+CXX	:=	g++
+CXXFLAGS	:=	-Wall -Isrc/network -Isrc/game -Isrc/world -Isrc/include -Isrc/player
+LDFLAGS	:=	-Lsrc/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+TARGET	:=	main.out
 
 SRCS	:=	$(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
+OBJS	:=	$(SRCS:.cpp=.o)
 
 .PHONY: all run server
 
-all:
-	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET).out
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-run: all
-	./$(TARGET).out
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-server:
-	java -Xmx1G -Xms1G -jar ~/minecraft/server.jar nogui
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+all: $(TARGET)
+
+run:
+	./$(TARGET)
