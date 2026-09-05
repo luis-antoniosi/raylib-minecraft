@@ -10,13 +10,36 @@ namespace World
         Air,
         Dirt,
         Stone,
-        Grass
+        Grass,
+        COUNT
     };
 
-    class Block
+    struct Block
     {
-        public:
-            BlockType type;
+        BlockType type = BlockType::Air;
+    };
+
+    struct BlockDefinition
+    {
+        Vector2 uvMin;
+        Vector2 uvMax;
+        bool solid;
+    };
+
+    class BlockRegistry
+    {
+    public:
+        static const BlockDefinition &get(BlockType type)
+        {
+            static const std::array<BlockDefinition, static_cast<size_t>(BlockType::COUNT)> DEFINITIONS = {{
+                {{0.0f, 0.0f}, {0.0f, 0.0f}, false}, // Air
+                {{0.5f, 0.0f}, {1.0f, 1.0f}, true},  // Dirt
+                {{0.0f, 0.0f}, {0.5f, 1.0f}, true},  // Stone
+                {{0.0f, 0.0f}, {0.5f, 1.0f}, true}, // Grass
+            }};
+
+            return DEFINITIONS[static_cast<size_t>(type)];
+        }
     };
 }
 

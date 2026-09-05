@@ -1,6 +1,7 @@
 #include <cstring>
 
 #include "chunk.hpp"
+#include "world.hpp"
 
 namespace World
 {
@@ -61,36 +62,18 @@ namespace World
         blocks[index(x, y, z)].type = type;
     }
 
-    bool Chunk::isAir(int x, int y, int z) const
+    bool Chunk::isAirWorld(World &world, int chunkX, int chunkZ, int x, int y, int z) const
     {
-        if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE)
-            return true;
+        if (x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE)
+            return blocks[index(x, y, z)].type == BlockType::Air;
 
-        return blocks[index(x, y, z)].type == BlockType::Air;
+        int worldX = chunkX * CHUNK_SIZE + x;
+        int worldZ = chunkZ * CHUNK_SIZE + z;
+
+        return world.getBlockWorld(worldX, y, worldZ) == BlockType::Air;
     }
 
-    void Chunk::getTileUV(BlockType type, Vector2 &uvMin, Vector2 &uvMax) const
-    {
-        const float inset = 0.5f / 32.0f; // atlas width
-
-        switch (type)
-        {
-        case BlockType::Stone:
-            uvMin = {0.0f + inset, 0.0f};
-            uvMax = {0.5f - inset, 1.0f};
-            break;
-        case BlockType::Dirt:
-            uvMin = {0.5f + inset, 0.0f};
-            uvMax = {1.0f - inset, 1.0f};
-            break;
-        default:
-            uvMin = {0.0f, 0.0f};
-            uvMax = {1.0f, 1.0f};
-            break;
-        }
-    }
-
-    Mesh Chunk::buildMesh() const
+    Mesh Chunk::buildMesh(World &world, int chunkX, int chunkZ) const
     {
         std::vector<float> vertices;
         std::vector<float> normals;
@@ -111,11 +94,13 @@ namespace World
 
                     for (const FaceData &face : FACES)
                     {
-                        if (!isAir(x + face.dx, y + face.dy, z + face.dz))
+                        // if the neighboring block is not air, its not visible, so skip it.
+                        if (!isAirWorld(world, chunkX, chunkZ, x + face.dx, y + face.dy, z + face.dz))
                             continue;
 
-                        Vector2 uvMin, uvMax;
-                        getTileUV(type, uvMin, uvMax);
+                        const BlockDefinition &def = BlockRegistry::get(type);
+                        Vector2 uvMin = def.uvMin;
+                        Vector2 uvMax = def.uvMax;
 
                         Vector2 faceUVs[4] =
                             {

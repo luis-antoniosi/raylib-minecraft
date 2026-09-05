@@ -1,16 +1,16 @@
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "raylib.h"
 #include "chunk.hpp"
 #include "player.hpp"
+#include "world.hpp"
 
 #define HOST "127.0.0.1"
 #define PORT 25565
 
 // ip route show | grep default | awk '{print $3}'
-
-void ApplyAtlasUV(Mesh &mesh, float uMin, float vMin, float uMax, float vMax);
 
 int main()
 {
@@ -27,11 +27,35 @@ int main()
     else
         std::cout << "Atlas loaded: " << atlas.width << ", " << atlas.height << std::endl;
 
-    World::Chunk chunk;
+    World::World world;
+    std::vector<Model> chunkModels;
+    std::vector<Vector3> chunkPositions;
 
-    Mesh chunkMesh = chunk.buildMesh();
-    Model chunkModel = LoadModelFromMesh(chunkMesh);
-    chunkModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = atlas;
+    const int RENDER_DISTANCE = 6;
+
+    for (int cx = 0; cx < RENDER_DISTANCE; cx++)
+    {
+        for (int cz = 0; cz < RENDER_DISTANCE; cz++)
+            world.getOrCreateChunk(cx, cz);
+    }
+
+    for (int cx = 0; cx < RENDER_DISTANCE; cx++)
+    {
+        for (int cz = 0; cz < RENDER_DISTANCE; cz++)
+        {
+            World::Chunk &chunk = world.getOrCreateChunk(cx, cz);
+            Mesh mesh = chunk.buildMesh(world, cx, cz);
+
+            Model model = LoadModelFromMesh(mesh);
+            model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = atlas;
+
+            chunkModels.push_back(model);
+            chunkPositions.push_back(
+                {(float)(cx * World::CHUNK_SIZE),
+                 0.0f,
+                 (float)(cz * World::CHUNK_SIZE)});
+        }
+    }
 
     Game::Player player;
 
@@ -45,7 +69,19 @@ int main()
 
         BeginMode3D(player.camera);
 
-        DrawModel(chunkModel, {0, 0, 0}, 1.0f, WHITE);
+        for (size_t i = 0; i < chunkModels.size(); i++)
+        {
+            DrawModel(chunkModels[i], chunkPositions[i], 1.0f, WHITE);
+
+            DrawCubeWires(
+                {chunkPositions[i].x + World::CHUNK_SIZE / 2.0f,
+                 World::CHUNK_SIZE / 2.0f,
+                 chunkPositions[i].z + World::CHUNK_SIZE / 2.0f},
+                (float)World::CHUNK_SIZE,
+                (float)World::CHUNK_SIZE,
+                (float)World::CHUNK_SIZE,
+                RED);
+        }
 
         EndMode3D();
 
@@ -57,18 +93,4 @@ int main()
     CloseWindow();
 
     return 0;
-}
-
-void ApplyAtlasUV(Mesh &mesh, float uMin, float vMin, float uMax, float vMax)
-{
-    for (int i = 0; i < mesh.vertexCount; i++)
-    {
-        float u = mesh.texcoords[i * 2 + 0];
-        float v = mesh.texcoords[i * 2 + 1];
-
-        mesh.texcoords[i * 2 + 0] = uMin + u * (uMax - uMin);
-        mesh.texcoords[i * 2 + 1] = vMin + v * (vMax - vMin);
-    }
-
-    UpdateMeshBuffer(mesh, 1, mesh.texcoords, mesh.vertexCount * 2 * sizeof(float), 0);
 }
