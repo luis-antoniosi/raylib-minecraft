@@ -2,7 +2,9 @@
 #define CHUNK_HPP
 
 #include <array>
+#include <vector>
 
+#include "raylib.h"
 #include "block.hpp"
 
 namespace World
@@ -13,18 +15,19 @@ namespace World
     class Chunk
     {
     private:
-        static int index(int x, int y, int z)
-        {
-            return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_SIZE);
-        }
-
-        std::array<BlockType, CHUNK_VOLUME> blocks;
+        static int index(int x, int y, int z);
+        bool isAir(int x, int y, int z) const;
+        void getTileUV(BlockType type, Vector2 &uvMin, Vector2 &uvMax) const;
+        
+        std::array<Block, CHUNK_VOLUME> blocks;
 
     public:
         Chunk();
 
-        BlockType getBlock(int x, int y, int z);
+        Block getBlock(int x, int y, int z);
         void setBlock(int x, int y, int z, BlockType type);
+
+        Mesh buildMesh() const;
     };
 }
 

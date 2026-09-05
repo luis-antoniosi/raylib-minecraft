@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "raymath.h"
+#include <iostream>
 
 namespace Game
 {
@@ -8,18 +9,29 @@ namespace Game
         position = (Vector3){9.0f, 5.0f, 3.0f};
 
         camera.position = position;
-        camera.target = Vector3Add(position, {0.0f, 0.0f, -1.0f});
+        camera.target = Vector3Add(position, {-1.0f, 0.0f, -2.0f});
         camera.up = {0.0f, 1.0f, 0.0f};
         camera.fovy = 60.0f;
         camera.projection = CAMERA_PERSPECTIVE;
     }
 
-    void Player::updateLook()
+    void Player::updateLook(float dt)
     {
         Vector2 mouseDelta = GetMouseDelta();
 
         lookRotation.x += mouseDelta.x * mouseSensivitity.x;
         lookRotation.y -= mouseDelta.y * mouseSensivitity.y;
+
+        // mouse is a bit funky in WSL
+        float keyLookSpeed = 1.5f;
+        if (IsKeyDown(KEY_LEFT))
+            lookRotation.x += keyLookSpeed * dt;
+        if (IsKeyDown(KEY_RIGHT))
+            lookRotation.x -= keyLookSpeed * dt;
+        if (IsKeyDown(KEY_UP))
+            lookRotation.y += keyLookSpeed * dt;
+        if (IsKeyDown(KEY_DOWN))
+            lookRotation.y -= keyLookSpeed * dt;
 
         lookRotation.y = Clamp(lookRotation.y, -pitchLimit, pitchLimit);
     }
@@ -60,7 +72,8 @@ namespace Game
 
     void Player::update(float dt)
     {
-        updateLook();
+        updateLook(dt);
         updateMove(dt);
+        std::cout << camera.target.x << ", " << camera.target.y << ", " << camera.target.z << std::endl;
     }
 }

@@ -13,7 +13,7 @@ namespace Game
         Vector2 mouseSensivitity = {0.001f, 0.001f};
         float pitchLimit = 1.5f;
 
-        void updateLook();
+        void updateLook(float dt);
         void updateMove(float dt);
 
     public:

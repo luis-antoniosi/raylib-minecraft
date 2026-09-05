@@ -1,6 +1,8 @@
 #ifndef BLOCK_HPP
 #define BLOCK_HPP
 
+#include "raylib.h"
+
 namespace World
 {
     enum class BlockType
@@ -9,6 +11,12 @@ namespace World
         Dirt,
         Stone,
         Grass
+    };
+
+    class Block
+    {
+        public:
+            BlockType type;
     };
 }
 
